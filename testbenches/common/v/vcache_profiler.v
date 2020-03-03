@@ -10,23 +10,45 @@ module vcache_profiler
     , parameter addr_width_p="inv"
 
     , parameter dma_pkt_width_lp=`bsg_cache_dma_pkt_width(addr_width_p)
+    ,parameter bsg_cache_pkt_width_lp=`bsg_cache_pkt_width(addr_width_p,data_width_p) 
   )
   (
     input clk_i
     , input reset_i
 
+
+    // For request stats incoming to tl stage
+    // As it takes one cycle from the time ready_o goes hight,
+    // to load the incoming cache packet into tl registers,
+    // We directly look at incoming cache_pkt into the cache
+    , input v_i
+    , input ready_o
+    , input [addr_width_p-1:0] addr_tl_r
+    , input [data_width_p-1:0] data_tl_r
+    , input bsg_cache_decode_s decode_tl_r
+    , input [bsg_cache_pkt_width_lp-1:0] cache_pkt_i
+    , input bsg_cache_decode_s decode
+
+
+    // For responses going out of verify stage
     , input v_o
     , input yumi_i
+    , input v_v_r
     , input miss_v
+    , input [addr_width_p-1:0] addr_v_r
+    , input [data_width_p-1:0] data_v_r
     , input bsg_cache_decode_s decode_v_r
+
 
     , input [dma_pkt_width_lp-1:0] dma_pkt_o
     , input dma_pkt_v_o
     , input dma_pkt_yumi_i
 
+
     , input [31:0] global_ctr_i
     , input print_stat_v_i
     , input [data_width_p-1:0] print_stat_tag_i
+
 
     , input trace_en_i // from top-level testbench
   );
