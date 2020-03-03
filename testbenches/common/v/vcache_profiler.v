@@ -27,6 +27,8 @@ module vcache_profiler
     , input [31:0] global_ctr_i
     , input print_stat_v_i
     , input [data_width_p-1:0] print_stat_tag_i
+
+    , input trace_en_i // from top-level testbench
   );
 
   `declare_bsg_cache_dma_pkt_s(addr_width_p);
