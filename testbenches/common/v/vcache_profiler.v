@@ -10,7 +10,7 @@ module vcache_profiler
     , parameter addr_width_p="inv"
 
     , parameter dma_pkt_width_lp=`bsg_cache_dma_pkt_width(addr_width_p)
-    ,parameter bsg_cache_pkt_width_lp=`bsg_cache_pkt_width(addr_width_p,data_width_p) 
+    , parameter bsg_cache_pkt_width_lp=`bsg_cache_pkt_width(addr_width_p,data_width_p) 
   )
   (
     input clk_i
@@ -125,10 +125,11 @@ module vcache_profiler
 
   // file logging
   //
-  localparam logfile_lp = "vcache_stats.log";
+  localparam logfile_lp = "vcache_stats.csv";
+  localparam tracefile_lp = "vcache_operation_trace.csv";
 
   string my_name;
-  integer fd_log;
+  integer fd_log, fd_trace;
 
   initial begin
 
@@ -138,6 +139,15 @@ module vcache_profiler
       $fwrite(fd_log, "instance,global_ctr,tag,ld,st,ld_miss,st_miss,dma_read_req,dma_write_req\n");
       $fclose(fd_log);
     end
+
+    // TODO: borna fix
+    //if (trace_en_i) begin
+      fd_trace = $fopen(tracefile_lp, "w");
+      $fwrite(fd_trace, "timestamp,x,y,addr,data,operation\n");
+      $fclose(fd_trace);
+    //end
+
+
 
     forever begin
       @(negedge clk_i) begin
@@ -154,6 +164,37 @@ module vcache_profiler
           );   
           $fclose(fd_log);
         end
+
+
+
+        if (~reset_i ) begin
+          fd_trace = $fopen(tracefile_lp, "a");
+
+          if(v_v_r) begin
+            if(inc_ld) begin
+              $fwrite(fd_trace, "%0d,%s,%0d,%0d,0x%0h,%s\n", $time, my_name[35], 0, addr_v_r, data_v_r, "ld");
+            end
+            if (inc_st) begin
+              $fwrite(fd_trace, "%0d,%s,%0d,%0d,0x%0h,%s\n", $time, my_name[35], 0, addr_v_r, data_v_r, "st");
+            end
+
+            if(miss) begin
+              if(miss_ld)
+                $fwrite(fd_trace, "%0d,%s,%0d,%0d,0x%0h,%s\n", $time, my_name[35], 0, addr_v_r, data_v_r, "miss_ld");
+              else if(miss_st)
+                $fwrite(fd_trace, "%0d,%s,%0d,%0d,0x%0h,%s\n", $time, my_name[35], 0, addr_v_r, data_v_r, "miss_st");
+              else
+                $fwrite(fd_trace, "%0d,%s,%0d,%0d,0x%0h,%s\n", $time, my_name[35], 0, addr_v_r, data_v_r, "miss_unk");
+            end
+          end
+          else
+            $fwrite(fd_trace, "%0d,%s,%0d,%0d,0x%0h,%s\n", $time, my_name[35], 0, addr_v_r, data_v_r, "idle");
+
+          $fclose(fd_trace);
+        end
+
+
+
       end
     end
   end
