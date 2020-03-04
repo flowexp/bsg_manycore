@@ -53,20 +53,44 @@ module vcache_profiler
     , input trace_en_i // from top-level testbench
   );
 
+
+  // For decoding the packed cache packet incoming to bsg_cache
+  //
+  `declare_bsg_cache_pkt_s(addr_width_p,data_width_p);
+  bsg_cache_pkt_s cache_pkt;
+  assign cache_pkt = cache_pkt_i;
+
+
   `declare_bsg_cache_dma_pkt_s(addr_width_p);
   bsg_cache_dma_pkt_s dma_pkt;
   assign dma_pkt = dma_pkt_o;
 
 
-  // event signals
-  //
 
+  // event signals
+
+  // Incoming request
+  // miss handler signals
+  // when miss is high, miss handler is active and output is not ready
+  // miss_ld/st signals refer to the type of missed request
+  //
+  wire miss    = v_v_r & miss_v & ~(v_o | yumi_i); 
+  wire miss_ld = v_v_r & miss_v & ~(v_o | yumi_i) & decode_v_r.ld_op;
+  wire miss_st = v_v_r & miss_v & ~(v_o | yumi_i) & decode_v_r.st_op;
+
+
+  // Outgoing response
+  // Load/store output is ready 
+  // when inc_ld/st is high it means a hit load/store is ready
+  // when inc_ld/st_miss is high it means a missed load/store is ready
+  //
   wire inc_ld = v_o & yumi_i & decode_v_r.ld_op;
   wire inc_st = v_o & yumi_i & decode_v_r.st_op;
   wire inc_ld_miss = v_o & yumi_i & decode_v_r.ld_op & miss_v;
   wire inc_st_miss = v_o & yumi_i & decode_v_r.st_op & miss_v;
   wire inc_dma_read_req = dma_pkt_v_o & dma_pkt_yumi_i & ~dma_pkt.write_not_read;
   wire inc_dma_write_req = dma_pkt_v_o & dma_pkt_yumi_i & dma_pkt.write_not_read;
+
 
 
   // stats counting
@@ -104,15 +128,15 @@ module vcache_profiler
   localparam logfile_lp = "vcache_stats.log";
 
   string my_name;
-  integer fd;
+  integer fd_log;
 
   initial begin
 
     my_name = $sformatf("%m");
     if (str_match(my_name, "vcache[0]")) begin
-      fd = $fopen(logfile_lp, "w");
-      $fwrite(fd, "instance,global_ctr,tag,ld,st,ld_miss,st_miss,dma_read_req,dma_write_req\n");
-      $fclose(fd);
+      fd_log = $fopen(logfile_lp, "w");
+      $fwrite(fd_log, "instance,global_ctr,tag,ld,st,ld_miss,st_miss,dma_read_req,dma_write_req\n");
+      $fclose(fd_log);
     end
 
     forever begin
@@ -121,14 +145,14 @@ module vcache_profiler
 
           $display("[BSG_INFO][VCACHE_PROFILER] %s t=%0t printing stats.", my_name, $time);
 
-          fd = $fopen(logfile_lp, "a");
-          $fwrite(fd, "%s,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d\n",
+          fd_log = $fopen(logfile_lp, "a");
+          $fwrite(fd_log, "%s,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d\n",
             my_name, global_ctr_i, print_stat_tag_i,
             stat_r.ld_count, stat_r.st_count,
             stat_r.ld_miss_count, stat_r.st_miss_count,
             stat_r.dma_read_req, stat_r.dma_write_req 
           );   
-          $fclose(fd);
+          $fclose(fd_log);
         end
       end
     end
