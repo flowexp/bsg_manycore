@@ -1178,14 +1178,15 @@ class VanillaStatsParser:
 
 
 
-    # go though the input traces and extract start and end stats  
-    # for each vcache bank 
+    # go though the input traces and extract start and end stats for each vcache bank 
     # return vcache stats 
     # this function only counts the portion between two print_stat_start and end messages
     # in practice, this excludes the time in between executions,
     # i.e. when tiles are waiting to be loaded by the host.
-    # cycle parallel cnt is the absolute cycles (not aggregate), i.e. the longest interval 
-    # among tiles that participate in a certain tag 
+    # contrary to vanilla stats, vcache stats can be printed multiple times, every time
+    # a tile invokes print_stat, the stat for all vcache banks is printed 
+    # Therefore, if multiple stats of the same vcache bank and the same tag are seen,
+    # the earliest (latest) stat is chosen if it is a start (end) stat.
     def __generate_vcache_stats(self, traces, vcaches):
         tags = list(range(self.max_tags)) + ["kernel"]
         num_tile_groups = {tag:0 for tag in tags}
@@ -1206,42 +1207,42 @@ class VanillaStatsParser:
 
             # Separate depending on stat type (start or end)
             if(cst.isStart):
-                if(tag_seen[cst.tag][cur_vcache]):
-                    print ("Warning: missing end stat for tag {}, vcache {}.".format(cst.tag, cur_vcache))
-                tag_seen[cst.tag][cur_vcache] = True;
-
-                for op in self.vcache_all_ops:
-                    vcache_stat_start[cst.tag][cur_vcache][op] = trace[op]
+                # If there already is a start stat for this vcache and this tag
+                if (vcache_stat_start[cst.tag][cur_vcache]):
+                    # And if the new start stat is an earlier version, replace with the existing one
+                    if (vcahe_stat_start[cst.tag][cur_vache]['global_ctr'] > trace['global_ctr']):
+                        for op in self.vcache_all_ops:
+                            vcache_stat_start[cst.tag][cur_vcache][op] = trace[op]
 
 
             elif (cst.isEnd):
-                if(not tag_seen[cst.tag][cur_vcache]):
-                    print ("Warning: missing start stat for tag {}, vcache {}.".format(cst.tag, cur_vcache))
-                tag_seen[cst.tag][cur_vcache] = False;
+                # If there already is a end stat for this vcache and this tag
+                if (vcache_stat_end[cst.tag][cur_vcache]):
+                    # And if the new end stat is a later version, replace with the existing one
+                    if (vcahe_stat_end[cst.tag][cur_vache]['global_ctr'] < trace['global_ctr']):
+                        for op in self.vcache_all_ops:
+                            vcache_stat_end[cst.tag][cur_vcache][op] = trace[op]
 
-                for op in self.vcache_all_ops:
-                    vcache_stat_end[cst.tag][cur_vcache][op] = trace[op]
 
                 vcache_stat[cst.tag][cur_vcache] += vcache_stat_end[cst.tag][cur_vcache] - vcache_stat_start[cst.tag][cur_vcache]
 
 
             # And depending on kernel start/end
             if(cst.isKernelStart):
-                if(tag_seen["kernel"][cur_vcache]):
-                    print ("Warning: missing Kernel End, vcache: {}.".format(cur_vcache))
-                tag_seen["kernel"][cur_vcache] = True;
-
-                for op in self.vcache_all_ops:
-                    vcache_stat_start["kernel"][cur_vcache][op] = trace[op]
+                # If there already is a start stat for this vcache and the kernel tag
+                if (vcache_stat_start["kernel"][cur_vcache]):
+                     # And if the new start stat is an earlier version, replace with the existing one
+                    if (vcahe_stat_start["kernel"][cur_vache]['global_ctr'] > trace['global_ctr']):
+                        for op in self.vcache_all_ops:
+                            vcache_stat_start["kernel"][cur_vcache][op] = trace[op]
 
 
             elif (cst.isKernelEnd):
-                if(not tag_seen["kernel"][cur_vcache]):
-                    print ("Warning: missing Kernel Start, vcache {}.".format(cur_vcache))
-                tag_seen["kernel"][cur_vcache] = False;
-
-                for op in self.vcache_all_ops:
-                    vcache_stat_end["kernel"][cur_vcache][op] = trace[op]
+                # If there already is a end stat for this vcache and the kernel tag
+                if (vcache_stat_end["kernel"][cur_vcache]):
+                    # And if the new end stat is a later version, replace with the existing one
+                    if (vcahe_stat_end["kernel"][cur_vache]['global_ctr'] < trace['global_ctr']):
+                        vcache_stat_end["kernel"][cur_vcache][op] = trace[op]
 
 
                 vcache_stat["kernel"][cur_vcache] += vcache_stat_end["kernel"][cur_vcache] - vcache_stat_start["kernel"][cur_vcache]
