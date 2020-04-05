@@ -157,6 +157,7 @@ class VanillaStatsParser:
                     "timing_data"     : type_fmt["cord"]       + type_fmt["int"]  + type_fmt["int"]     + type_fmt["float"]   + type_fmt["percent"] + type_fmt["percent"] + "\n",
                     "instr_header"    : type_fmt["name"]       + type_fmt["int"]  + type_fmt["type"]    + "\n",
                     "instr_data"      : type_fmt["name"]       + type_fmt["int"]  + type_fmt["percent"] + "\n",
+                    "instr_data_indt" : type_fmt["name_indt"]  + type_fmt["int"]  + type_fmt["percent"] + "\n",
                     "stall_header"    : type_fmt["name"]       + type_fmt["type"] + type_fmt["type"]    + type_fmt["type"]    + "\n",
                     "stall_data"      : type_fmt["name"]       + type_fmt["int"]  + type_fmt["percent"] + type_fmt["percent"] + "\n",
                     "stall_data_indt" : type_fmt["name_indt"]  + type_fmt["int"]  + type_fmt["percent"] + type_fmt["percent"] + "\n",
@@ -551,7 +552,9 @@ class VanillaStatsParser:
    
         # Print instruction stats for manycore
         for instr in instrs:
-            self.__print_stat(stat_file, "instr_data", instr,
+         
+            instr_format = "instr_data_indt" if (instr.startswith('instr_ld_') or instr.startswith('instr_st_')) else "instr_data"
+            self.__print_stat(stat_file, instr_format, instr,
                                          stat[tag][instr]
                                          ,(100 * stat[tag][instr] / stat[tag]["instr_total"]))
         return
