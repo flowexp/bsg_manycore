@@ -217,7 +217,7 @@ module vcache_profiler
       $fwrite(log_fd, "time,vcache,global_ctr,tag,");
       $fwrite(log_fd, "instr_ld,instr_ld_ld,instr_ld_ldu,instr_ld_lw,instr_ld_lwu,");
       $fwrite(log_fd, "instr_ld_lh,instr_ld_lhu,instr_ld_lb,instr_ld_lbu,");
-      $fwrite(log_fd, "instr_st,instr_st_sd,instr_st_sw,instr_st_sh,instr_st_sb");
+      $fwrite(log_fd, "instr_st,instr_st_sd,instr_st_sw,instr_st_sh,instr_st_sb,");
       $fwrite(log_fd, "instr_mask,instr_sigext,instr_tagst,instr_tagfl,instr_taglv,");
       $fwrite(log_fd, "instr_afl,instr_aflinv,instr_ainv,instr_alock,instr_aunlock,");
       $fwrite(log_fd, "instr_tag_read,instr_atomic,instr_amoswap,instr_amoor,");
