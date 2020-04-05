@@ -294,7 +294,7 @@ module vcache_profiler
             stat_r.miss_count,
             stat_r.idle_count,
             stat_r.dma_read_req,
-            stat_r.dma_write_req,
+            stat_r.dma_write_req
           );
 
           $fclose(log_fd);
