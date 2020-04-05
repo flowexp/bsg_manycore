@@ -177,9 +177,6 @@ class VanillaStatsParser:
     # default constructor
     def __init__(self, per_tile_stat, per_tile_group_stat, per_vcache_stat, vanilla_input_file, vcache_input_file):
 
-        #self.manycore_dim_y = manycore_dim_y
-        #self.manycore_dim_x = manycore_dim_x
-        #self.manycore_dim = manycore_dim_y * manycore_dim_x
         self.per_tile_stat = per_tile_stat
         self.per_tile_group_stat = per_tile_group_stat
         self.per_vcache_stat = per_vcache_stat
@@ -611,7 +608,8 @@ class VanillaStatsParser:
 
         # Print instruction stats for manycore
         for instr in instrs:
-            self.__print_stat(stat_file, "instr_data", instr,
+            instr_format = "instr_data_indt" if (instr.startswith('instr_ld_') or instr.startswith('instr_st_')) else "instr_data"
+            self.__print_stat(stat_file, instr_format, instr,
                                          stat[tag][item][instr]
                                          ,(100 * np.float64(stat[tag][item][instr]) / stat[tag][item]["instr_total"]))
         return
@@ -844,9 +842,12 @@ class VanillaStatsParser:
             if (miss == "miss_icache"):
                 operation = "icache"
                 operation_cnt = stat[tag]["instr_total"]
+            elif (miss == "miss_total"):
+                operation = "hit_total"
+                operation_cnt = stat[tag][operation] + stat[tag][miss]
             else:
                 operation = miss.replace("miss_", "instr_")
-                operation_cnt = stat[tag][operation]
+                operation_cnt = stat[tag][operation] + stat[tag][miss]
             miss_cnt = stat[tag][miss]
             hit_rate = 100.0 if operation_cnt == 0 else 100.0*(1 - miss_cnt/operation_cnt)
          
@@ -923,9 +924,12 @@ class VanillaStatsParser:
             if (miss == "miss_icache"):
                 operation = "icache"
                 operation_cnt = stat[tag][item]["instr_total"]
+            elif (miss == "miss_total"):
+                operation = "hit_total"
+                operation_cnt = stat[tag][item][operation] + stat[tag][item][miss]
             else:
                 operation = miss.replace("miss_", "instr_")
-                operation_cnt = stat[tag][item][operation]
+                operation_cnt = stat[tag][item][operation] + stat[tag][item][miss] 
             miss_cnt = stat[tag][item][miss]
             hit_rate = 1 if operation_cnt == 0 else (1 - miss_cnt/operation_cnt)
          
@@ -1333,6 +1337,8 @@ class VanillaStatsParser:
                     tile_stat[tag][tile]["bubble_total"] += tile_stat[tag][tile][bubble]
                 for miss in self.misses:
                     tile_stat[tag][tile]["miss_total"] += tile_stat[tag][tile][miss]
+                    hit = miss.replace("miss_", "instr_")
+                    tile_stat[tag][tile]["hit_total"] += tile_stat[tag][tile][hit]
 
         # Generate total stats for each tile group by summing all stats 
         for tag in tags:
@@ -1348,6 +1354,9 @@ class VanillaStatsParser:
                     tile_group_stat[tag][tg_id]["bubble_total"] += tile_group_stat[tag][tg_id][bubble]
                 for miss in self.misses:
                     tile_group_stat[tag][tg_id]["miss_total"] += tile_group_stat[tag][tg_id][miss]
+                    hit = miss.replace("miss_", "instr_")
+                    tile_group_stat[tag][tg_id]["hit_total"] += tile_group_stat[tag][tg_id][hit]
+
 
                 # Add the parallel cycle stats (not the aggregate, i.e. the longest parallel interval)
                 # to the tile group stats manually
@@ -1357,7 +1366,7 @@ class VanillaStatsParser:
         self.stalls  += ["stall_total"]
         self.bubbles += ["bubble_total"]
         self.misses  += ["miss_total"]
-        self.all_ops += ["instr_total", "stall_total", "bubble_total", "miss_total"]
+        self.all_ops += ["instr_total", "stall_total", "bubble_total", "miss_total", "hit_total"]
 
         return num_tile_groups, tile_group_stat, tile_stat, manycore_cycle_parallel_cnt
 
@@ -1469,13 +1478,17 @@ class VanillaStatsParser:
                         vcache_stat[tag][vcache]["bubble_total"] += vcache_stat[tag][vcache][bubble]
                     for miss in self.vcache_misses:
                         vcache_stat[tag][vcache]["miss_total"] += vcache_stat[tag][vcache][miss]
+                        hit = miss.replace("miss_", "instr_")
+                        vcache_stat[tag][vcache]["hit_total"] += vcache_stat[tag][vcache][hit]
+
+
 
 
         self.vcache_instrs  += ["instr_total"]
         self.vcache_stalls  += ["stall_total"]
         self.vcache_bubbles += ["bubble_total"]
         self.vcache_misses  += ["miss_total"]
-        self.vcache_all_ops += ["instr_total", "stall_total", "bubble_total", "miss_total"]
+        self.vcache_all_ops += ["instr_total", "stall_total", "bubble_total", "miss_total", "hit_total"]
 
         return vcache_stat
 
