@@ -224,11 +224,11 @@ module vcache_profiler
       $fwrite(log_fd, "miss_ld,miss_st,stall_miss,stall_idle,dma_read_req,dma_write_req\n");
       $fclose(log_fd);
 
-      if (trace_en_i) begin
+      //if (trace_en_i) begin
         trace_fd = $fopen(tracefile_lp, "w");
         $fwrite(trace_fd, "cycle,vcache,operation\n");
         $fclose(trace_fd);
-      end
+      //end
     end
 
 
