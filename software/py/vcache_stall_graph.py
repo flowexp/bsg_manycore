@@ -48,8 +48,22 @@ class VCacheStallGraph:
         self.abstract = abstract
 
         # List of operations performed
-        self.operation_list = ["ld",     
+        self.operation_list = ["ld",
+                               "ld_ld",
+                               "ld_ldu",
+                               "ld_lw",
+                               "ld_lwu",
+                               "ld_lh",
+                               "ld_lhu",
+                               "ld_lb",
+                               "ld_lbu",
+
                                "st",     
+                               "st_sd",
+                               "st_sw",
+                               "st_sh",
+                               "st_sb",
+
                                "mask",   
                                "sigext", 
                                "tagst",  
